@@ -10,7 +10,6 @@ import logging
 import urllib
 import re
 import time
-from operator import itemgetter
 import threading
 
 # third-party
