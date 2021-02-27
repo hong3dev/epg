@@ -66,13 +66,6 @@ class LogicNormal(object):
             except:
                 pass
             
-            """
-            if app.config['config']['server']:
-                if ret == 'refresh' or (ret=='recent' and os.path.exists(os.path.join(path_data, 'output', 'xmltv_all.xml')) == False):
-                    if LogicNormal.make_xml('all'):
-                        SJVASupportControl.epg_upload()
-                        logger.debug('all epg make..')
-            """
         except Exception as e: 
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())
