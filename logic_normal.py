@@ -45,8 +45,9 @@ class LogicNormal(object):
                     logger.debug('EPG klive epg make start..')
                     LogicNormal.make_xml('klive')
                     logger.debug('EPG klive epg make end..')
-            except:
-                pass
+            except Exception as e: 
+                logger.error('Exception:%s', e)
+                logger.error(traceback.format_exc())
             
             try:
                 import tvheadend
@@ -54,8 +55,9 @@ class LogicNormal(object):
                     logger.debug('EPG tvheadend epg make start..')
                     LogicNormal.make_xml('tvheadend')
                     logger.debug('EPG tvheadend epg make end..')
-            except:
-                pass
+            except Exception as e: 
+                logger.error('Exception:%s', e)
+                logger.error(traceback.format_exc())
 
             try:
                 import hdhomerun
@@ -63,8 +65,9 @@ class LogicNormal(object):
                     logger.debug('EPG hdhomerun epg make start..')
                     LogicNormal.make_xml('hdhomerun')
                     logger.debug('EPG hdhomerun epg make end..')
-            except:
-                pass
+            except Exception as e: 
+                logger.error('Exception:%s', e)
+                logger.error(traceback.format_exc())
             
         except Exception as e: 
             logger.error('Exception:%s', e)
@@ -103,6 +106,7 @@ class LogicNormal(object):
     @staticmethod
     @celery.task
     def make_xml_task(call_from):
+        logger.warning(f"make_xml_task : {call_from}")
         if call_from == 'tvheadend':
             try:
                 import tvheadend
