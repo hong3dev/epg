@@ -46,8 +46,9 @@ class LogicNormal(object):
                     LogicNormal.make_xml('klive')
                     logger.debug('EPG klive epg make end..')
             except Exception as e: 
-                logger.error('Exception:%s', e)
-                logger.error(traceback.format_exc())
+                logger.error('klive not installed')
+                #logger.error('Exception:%s', e)
+                #logger.error(traceback.format_exc())
             
             try:
                 import tvheadend
@@ -56,8 +57,9 @@ class LogicNormal(object):
                     LogicNormal.make_xml('tvheadend')
                     logger.debug('EPG tvheadend epg make end..')
             except Exception as e: 
-                logger.error('Exception:%s', e)
-                logger.error(traceback.format_exc())
+                logger.error('tvheadend not installed')
+                #logger.error('Exception:%s', e)
+                #logger.error(traceback.format_exc())
 
             try:
                 import hdhomerun
@@ -66,8 +68,9 @@ class LogicNormal(object):
                     LogicNormal.make_xml('hdhomerun')
                     logger.debug('EPG hdhomerun epg make end..')
             except Exception as e: 
-                logger.error('Exception:%s', e)
-                logger.error(traceback.format_exc())
+                logger.error('hdhomerun not installed')
+                #logger.error('Exception:%s', e)
+                #logger.error(traceback.format_exc())
             
         except Exception as e: 
             logger.error('Exception:%s', e)
