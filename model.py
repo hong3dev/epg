@@ -238,6 +238,9 @@ class ModelEpgMakerChannel(db.Model):
     videoportal_name = db.Column(db.String)
     videoportal_id = db.Column(db.String)
 
+    seezn_name = db.Column(db.String)
+    seezn_id = db.Column(db.String)
+
     everyon_name = db.Column(db.String)
     everyon_id = db.Column(db.String)
     programs = db.relationship('ModelEpgMakerProgram', backref='channel', lazy=True)
@@ -278,6 +281,10 @@ class ModelEpgMakerChannel(db.Model):
             self.videoportal_name = d['site_info']['videoportal'][0]
             self.videoportal_id = d['site_info']['videoportal'][1]
             site_count['videoportal'] += 1
+        if 'seezn' in d['site_info']:
+            self.seezn_name = d['site_info']['seezn'][0]
+            self.seezn_id = d['site_info']['seezn'][1]
+            site_count['seezn'] += 1
         #if 'everyon' in d['site_info']:
         #    self.everyon_name = d['site_info']['everyon'][0]
         #    self.everyon_id = d['site_info']['everyon'][1]
@@ -295,7 +302,7 @@ class ModelEpgMakerChannel(db.Model):
 
     @staticmethod
     def save(data):
-        site_count = {"daum":0,"skb":0,"lgu":0,"kt":0,"wavve":0,"tving":0,"videoportal":0}#,"everyon":0}
+        site_count = {"daum":0,"skb":0,"lgu":0,"kt":0,"wavve":0,"tving":0,"videoportal":0, "seezn":0}#,"everyon":0}
         try:
             data = data['list']
             for d in data:
