@@ -351,7 +351,8 @@ class ModelEpgMakerChannel(db.Model):
 
     @staticmethod
     def util_get_search_name(s):
-        return s.lower().replace('uhd', '').strip().replace('-', '').replace(' ', '')
+        # return s.lower().replace('uhd', '').strip().replace('-', '').replace(' ', '')
+        return s.lower().replace('uhd', '').replace('sd', '').replace('hd', '').replace('fhd', '').strip().replace('-', '').replace(' ', '').replace('＋', '+').replace('’', '\'')
 
 
 

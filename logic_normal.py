@@ -80,26 +80,33 @@ class LogicNormal(object):
     @staticmethod
     def make_xml(call_from, show_msg=False):
         try:
-            if app.config['config']['use_celery']:
-                def thread_function():
-                    ret = LogicNormal.make_xml_task.apply_async((call_from,))
-                    #lock 이 걸림
-                    result = ret.get()
-                    if show_msg:
-                        if result == True:
-                            data = {'type':'success', 'msg' : u'%s EPG 생성이 완료되었습니다.' % call_from}
-                            socketio.emit("notify", data, namespace='/framework', broadcast=True)   
-                        else :
-                            data = {'type':'warning', 'msg' : u'%s EPG 생성이 실패하였습니다.<br>%s' % (call_from, result)}
-                            socketio.emit("notify", data, namespace='/framework', broadcast=True)   
-                t = threading.Thread(target=thread_function, args=())
-                t.daemon = True
-                t.start()
-                # 2020-10-21
-                t.join()
-            else:
-                LogicNormal.make_xml_task(call_from)
+            # if app.config['config']['use_celery']:
+            #     logger.debug('make_xml: use Celery')
+
+            #     def thread_function():
+            #         ret = LogicNormal.make_xml_task.apply_async((call_from,))
+            #         #lock 이 걸림
+            #         result = ret.get()
+            #         if show_msg:
+            #             if result == True:
+            #                 data = {'type':'success', 'msg' : u'%s EPG 생성이 완료되었습니다.' % call_from}
+            #                 socketio.emit("notify", data, namespace='/framework', broadcast=True)   
+            #             else :
+            #                 data = {'type':'warning', 'msg' : u'%s EPG 생성이 실패하였습니다.<br>%s' % (call_from, result)}
+            #                 socketio.emit("notify", data, namespace='/framework', broadcast=True)   
+            #     t = threading.Thread(target=thread_function, args=())
+            #     t.daemon = True
+            #     t.start()
+            #     # 2020-10-21
+            #     t.join()
+            # else:
+            logger.debug('make_xml: not Use Celery')
+            LogicNormal.make_xml_task(call_from)
+
+
             return True
+
+
         except Exception as e: 
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())
@@ -112,21 +119,59 @@ class LogicNormal(object):
         logger.warning(f"make_xml_task : {call_from}")
         if call_from == 'tvheadend':
             try:
+
                 import tvheadend
                 channel_list = db.session.query(ModelEpgMakerChannel).all()
                 tvh_list = tvheadend.LogicNormal.channel_list()
+
+
+                # 같은 채널 인데 FHD, default, SD등 여러개가 될 수 있으니 합침
                 if tvh_list is None:
                     return 'not setting tvheadend'
+                
+                listNumber = []
+                listLineup = tvh_list['lineup']
+                tvh_list['lineup'] = []
+
+                logger.debug(listLineup)
+
+                for tvh_ch in listLineup:
+                    
+                    if tvh_ch['GuideNumber'] in listNumber:
+                        continue
+                    else:
+                        listNumber.append(tvh_ch['GuideNumber'])
+
+                        tvh_ch['GuideName'] = str(tvh_ch['GuideName']).replace(' - FHD', '').replace(' - SD', '').replace(' - DEFAULT', '').replace(' - default', '')
+                        tvh_ch['uuid'] = str(tvh_ch['GuideNumber'])
+                        tvh_list['lineup'].append(tvh_ch)
+
+                logger.debug(tvh_list['lineup'])
+
+
+
+
+
+                if tvh_list is None:
+                    return 'not setting tvheadend'
+
+                logger.debug('start lineUp')
                 for tvh_ch in tvh_list['lineup']:
                     search_name = ModelEpgMakerChannel.util_get_search_name(tvh_ch['GuideName'])
+
+
                     #logger.debug('%s %s', search_name, type(search_name))
                     for t in channel_list:
-                        #logger.debug(t.search_name.split('|')) 
-                        if search_name in t.search_name.split('|'):
+                        #logger.debug(t.search_name.split('|'))
+                        _epg_name_list = t.search_name.split('|') + [ModelEpgMakerChannel.util_get_search_name(t.name)]
+                        if search_name in _epg_name_list:
                             tvh_ch['channel_instance'] = t
                             break
                     if 'channel_instance' not in tvh_ch:
                         logger.debug('NOT MATCH : %s', tvh_ch['GuideName'])
+
+                logger.debug('end lineUp')
+                
             except Exception as e: 
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
@@ -140,10 +185,9 @@ class LogicNormal(object):
                 root = ET.Element('tv')
                 root.set('generator-info-name', SystemModelSetting.get('ddns'))
                 
+                logger.debug('start program')
                 for tvh in tvh_list['lineup']:
                 #for channel in channel_list:
-                    logger.debug(tvh['GuideName'])
-                    logger.debug(tvh)
                     if 'channel_instance' not in tvh:
                         logger.debug('no channel_instance :%s', tvh['GuideName'])
                         continue
@@ -163,7 +207,11 @@ class LogicNormal(object):
                     display_name_tag.text = tvh['GuideName']
                     display_name_tag = ET.SubElement(channel_tag, 'display-name') 
                     display_name_tag.text = str(tvh['GuideNumber'])
+                logger.debug('end program')
+                
+                
 
+                logger.debug('start make')
                 for tvh in tvh_list['lineup']:
                 #for channel in channel_list:
                     #logger.debug(tvh['GuideName'])
@@ -172,6 +220,12 @@ class LogicNormal(object):
                         continue
                     channel = tvh['channel_instance']
                     LogicNormal.make_channel(root, channel, tvh['uuid'])
+                    continue
+
+                logger.debug('enddddd make')
+                
+
+                
             except Exception as e: 
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
@@ -321,6 +375,7 @@ class LogicNormal(object):
                     title_tag.text = program.title + ' (재)'
                 else:
                     title_tag.text = program.title
+
                 if program.daum_info is not None:
                     if program.daum_info.poster is not None:
                         icon_tag = ET.SubElement(program_tag, 'icon')

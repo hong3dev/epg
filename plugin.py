@@ -25,6 +25,8 @@ from .logic import Logic
 from .logic_normal import LogicNormal
 
 #########################################################
+from .model import ModelEpgMakerChannel
+
 
 blueprint = Blueprint(package_name, package_name, url_prefix='/%s' %  package_name, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 
@@ -107,6 +109,15 @@ def ajax(sub):
             sub = request.form['sub']
             ret = LogicNormal.make_xml(sub, show_msg=True)
             return jsonify(ret)
+
+
+        elif sub == 'channel_list':
+            ret = ModelEpgMakerChannel.get_channel_list()
+            logger.debug('channel_list :%s', len(ret))
+             
+            return jsonify([x.as_dict() for x in ret])
+
+
     except Exception as e: 
         logger.error('Exception:%s', e)
         logger.error(traceback.format_exc())
